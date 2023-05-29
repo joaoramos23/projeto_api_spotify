@@ -4,3 +4,4 @@ token.cache/
 .cache
 ideias
 .gitignore
+env

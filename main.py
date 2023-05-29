@@ -7,6 +7,10 @@ Criar DATABASE: 'CREATE DATABASE MUSICAS_SPOTIFY;'
 import requests
 import json
 import psycopg2
+import psycopg2.extras as extras
+from dotenv import load_dotenv
+import os
+
 
 # Função que gera o token access do spotify.
 def token_access():
@@ -41,9 +45,9 @@ def search_tracks():
 def connect_db():  # conexão com o banco.
     conn = psycopg2.connect(
         host="localhost",
-        database="musicas_spotify",
-        user="postgres",
-        password="klo5s871")
+        database="postgres",
+        user="USER",
+        password="SENHA")
     conn.autocommit=True
     if conn.closed == 0:
         print("Conexão estabelecida.")
@@ -66,15 +70,18 @@ def create_table(cursor, conn):
         );""")
 
 def insert_db(all_pages,cursor,conn):
+    dados = []
     for track in all_pages:
+        tuplas = ()
         id_music = track['id']
         name_music = track['name']
         release_date = track['album']['release_date']
         name_artists = ", ".join(artists['name']
                                  for artists in track['artists'])
         popularity = track['popularity']
-        cursor.execute(f"""INSERT INTO musicas_beleza VALUES (%s,%s,%s,%s,%s);""",
-                       (id_music, name_music, release_date, name_artists, popularity))
+        tuplas = (id_music, name_music, release_date, name_artists, popularity)
+        dados.append(tuplas)
+    extras.execute_values(cursor,f"""INSERT INTO musicas_beleza VALUES %s;""",dados)
 
 def main_function():
     cxnx = connect_db()  # conexao com o banco de dados postgres.
@@ -83,8 +90,10 @@ def main_function():
     all_pages = search_tracks()
     insert_db(all_pages,cursor,cxnx)
 
+
+load_dotenv("env")
 # variavel para armazenar o client_id
-client_id = '6892f7c47f4d45e493794c87902a2536'
+client_id = os.getenv("CLIENT_ID")
 # variavel para armazenar o client_secret
-client_secret = 'b9b89fe252ee45a1a6e1cd4968ac2e29'
+client_secret = os.getenv("CLIENT_SECRET")
 main_function()
